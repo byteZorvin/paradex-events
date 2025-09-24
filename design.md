@@ -1,4 +1,5 @@
-The below are the events that need to be inedexed
+The below are the events that need to be indexed
+
 ```solidity
 interface IStarknetMessagingEvents {
     // This event needs to be compatible with the one defined in Output.sol.

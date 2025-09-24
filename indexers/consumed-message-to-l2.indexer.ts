@@ -8,11 +8,11 @@ import * as schema from "../lib/schema";
 import { encodeEventTopics, decodeEventLog, parseAbi } from "viem";
 
 const abi = parseAbi([
-  "event LogMessageToL2(address indexed fromAddress, uint256 indexed toAddress, uint256 indexed selector,  uint256[] payload, uint256 nonce, uint256 fee)",
+  "event ConsumedMessageToL2(address indexed fromAddress, uint256 indexed toAddress, uint256 indexed selector, uint256[] payload, uint256 nonce)",
 ]);
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
-  const { startingBlock, streamUrl } = runtimeConfig["messaging"];
+  const { startingBlock, streamUrl } = runtimeConfig["consumed-message-to-l2"];
   const db = drizzle({
     schema,
   });
@@ -29,7 +29,7 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
           transactionStatus: "succeeded",
           topics: encodeEventTopics({
             abi,
-            eventName: "LogMessageToL2",
+            eventName: "ConsumedMessageToL2",
           }) as `0x${string}`[],
         },
       ],
@@ -48,9 +48,6 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
       );
 
       for (const log of block.logs) {
-
-        let timestamp = block.header.timestamp;
-
         const decodedLog = decodeEventLog({
           abi,
           data: log.data,
@@ -64,16 +61,15 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
           ),
         );
 
-        await db.insert(schema.LogMessageToL2).values({
-          fromAddress: decodedLog.args.fromAddress.toString(),
+        await db.insert(schema.ConsumedMessageToL2).values({
+          fromAddress: decodedLog.args.fromAddress,
           toAddress: decodedLog.args.toAddress.toString(),
           selector: decodedLog.args.selector.toString(),
-          payload: JSON.stringify(decodedLog.args.payload.toString()),
+          payload: JSON.stringify(decodedLog.args.payload.map(p => p.toString())),
           nonce: decodedLog.args.nonce.toString(),
-          fee: decodedLog.args.fee.toString(),
           endCursor: endCursor?.orderKey.toString(),
           uniqueKey: endCursor?.uniqueKey,
-          timestamp: timestamp,
+          timestamp: new Date(Number(block.header.timestamp) * 1000),
         });
       }
     },
