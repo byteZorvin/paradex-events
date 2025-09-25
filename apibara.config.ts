@@ -2,7 +2,7 @@ import { defineConfig } from "apibara/config";
 
 export default defineConfig({
   runtimeConfig: {
-    messaging: {
+    "log-message-to-l2": {
       startingBlock: 17733931,
       streamUrl: "https://mainnet.ethereum.a5a.ch",
     },

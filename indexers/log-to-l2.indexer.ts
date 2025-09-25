@@ -12,7 +12,7 @@ const abi = parseAbi([
 ]);
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
-  const { startingBlock, streamUrl } = runtimeConfig["messaging"];
+  const { startingBlock, streamUrl } = runtimeConfig["log-message-to-l2"];
   const db = drizzle({
     schema,
   });
