@@ -8,11 +8,11 @@ import * as schema from "../lib/schema";
 import { encodeEventTopics, decodeEventLog, parseAbi } from "viem";
 
 const abi = parseAbi([
-  "event ConsumedMessageToL1(uint256 indexed fromAddress, address indexed toAddress, uint256[] payload)",
+  "event MessageToL2Canceled(address indexed fromAddress, uint256 indexed toAddress, uint256 indexed selector, uint256[] payload, uint256 nonce)",
 ]);
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
-  const { startingBlock, streamUrl } = runtimeConfig["consumed-message-to-l1"];
+  const { startingBlock, streamUrl } = runtimeConfig["message-to-l2-canceled"];
   const db = drizzle({
     schema,
   });
@@ -22,14 +22,14 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
     finality: "accepted",
     startingBlock: BigInt(startingBlock),
     filter: {
-      header: "on_data",
+      header: "on_data_or_on_new_block",
       logs: [
         {
           address: "0xF338cad020D506e8e3d9B4854986E0EcE6C23640",
           transactionStatus: "succeeded",
           topics: encodeEventTopics({
             abi,
-            eventName: "ConsumedMessageToL1",
+            eventName: "MessageToL2Canceled",
           }) as `0x${string}`[],
         },
       ],
@@ -59,17 +59,17 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
           JSON.stringify(decodedLog, (key, value) =>
             typeof value === "bigint" ? value.toString() : value,
           ),
-          "Timestamp: ",
-          new Date(Number(block.header.timestamp) * 1000),
         );
 
-        await db.insert(schema.ConsumedMessageToL1).values({
-          fromAddress: decodedLog.args.fromAddress.toString(),
-          toAddress: decodedLog.args.toAddress,
+        await db.insert(schema.MessageToL2Canceled).values({
+          fromAddress: decodedLog.args.fromAddress,
+          toAddress: decodedLog.args.toAddress.toString(),
+          selector: decodedLog.args.selector.toString(),
           payload: JSON.stringify(decodedLog.args.payload.map(p => p.toString())),
+          nonce: decodedLog.args.nonce.toString(),
           endCursor: endCursor?.orderKey.toString(),
           uniqueKey: endCursor?.uniqueKey,
-          timestamp: new Date(Number(block.header.timestamp) * 1000),
+          timestamp: block.header.timestamp,
         });
       }
     },

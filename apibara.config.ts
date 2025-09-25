@@ -19,7 +19,7 @@ export default defineConfig({
       streamUrl: "https://mainnet.ethereum.a5a.ch",
     },
     "message-to-l2-cancellation-started": {
-      startingBlock: 17733931,
+      startingBlock: 17733930,
       streamUrl: "https://mainnet.ethereum.a5a.ch",
     },
     "message-to-l2-canceled": {
